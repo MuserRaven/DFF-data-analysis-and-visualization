@@ -1,5 +1,45 @@
 
 %%%% This page is for the data analysis for dff data
+%% Store Raw data into a rawmatrix
+Numberofcell = length(ce);
+rawmatrix = nan(length(ce(1).raw),Numberofcell); 
+% matrix that store dff infor of all neurons in ROI over all timesteps
+meanraw = nan(length(ce),1);
+% mean of dff for each neurons in ROI
+for i = 1:Numberofcell
+     rawmatrix(:,i)=ce(i).dff;    
+end
+rawmatrix = rmmissing(rawmatrix);
+Timelaspe = length(dff)-length(rawmatrix);
+% the timelaspse for the neurons to respond
+
+for i = 1:Numberofcell
+    meanraw(i)=mean(rawmatrix(:,i)); % get the mean dff for all neurons
+end
+plot(meanraw)
+xlabel('# of Neurons')
+ylabel('Mean DFF')
+figure
+cell = 9; % the number of neuron we are interested in
+plot(rawmatrix(:,cell))
+movavgvector = ones(100,1); % number of data point used for each bin 
+num = (1/length(movavgvector))*movavgvector; % the moving average filter
+den = 1;
+y = filter(num,den,rawmatrix(:,cell)); % apply a moving average filter to create a baseline 
+hold on 
+plot(y,'r')
+xlabel('Time Steps')
+ylabel('Raw and Baseline')
+legend('Raw','MA Baseline')
+
+% do some fourier transform
+figure,plot(autocorr(rawmatrix(:,cell),NumLags=100))
+% do some auto correlation
+xlabel('Time Lag')
+ylabel('AutoCorrelation')
+
+filt = filter2(den,rawmatrix(:,1));
+plot(filt)
 
 
 
@@ -7,7 +47,7 @@
 Numberofcell = length(ce);
 dffmatrix = nan(length(ce(1).dff),Numberofcell); 
 % matrix that store dff infor of all neurons in ROI over all timesteps
-meandff = nan(length(ce),1);
+meanraw = nan(length(ce),1);
 % mean of dff for each neurons in ROI
 for i = 1:Numberofcell
      dffmatrix(:,i)=ce(i).dff;    
@@ -17,18 +57,18 @@ Timelaspe = length(dff)-length(dffmatrix);
 % the timelaspse for the neurons to respond
 
 for i = 1:Numberofcell
-    meandff(i)=mean(dffmatrix(:,i)); % get the mean dff for all neurons
+    meanraw(i)=mean(dffmatrix(:,i)); % get the mean dff for all neurons
 end
-plot(meandff)
+plot(meanraw)
 xlabel('# of Neurons')
 ylabel('Mean DFF')
 figure
 cell = 9; % the number of neuron we are interested in
-plot(dffmatrix(:,cell))
+plot(rawmatrix(:,cell))
 movavgvector = ones(100,1); % number of data point used for each bin 
 num = (1/length(movavgvector))*movavgvector; % the moving average filter
 den = 1;
-y = filter(num,den,dffmatrix(:,cell)); % apply a moving average filter to create a baseline 
+y = filter(num,den,rawmatrix(:,cell)); % apply a moving average filter to create a baseline 
 hold on 
 plot(y,'r')
 xlabel('Time Steps')
@@ -36,12 +76,12 @@ ylabel('DFF and Baseline')
 legend('DFF','MA Baseline')
 
 % do some fourier transform
-figure,plot(autocorr(dffmatrix(:,cell),NumLags=100))
+figure,plot(autocorr(rawmatrix(:,cell),NumLags=100))
 % do some auto correlation
 xlabel('Time Lag')
 ylabel('AutoCorrelation')
 
-filt = filter2(den,dffmatrix(:,1));
+filt = filter2(den,rawmatrix(:,1));
 plot(filt)
 
 
@@ -100,7 +140,7 @@ num = (1/length(ones(5,1)))*ones(5,1);
 %subplot(222),plot(fft(voltage(1:1000,3)))
 
 %% Correlation Matrix for Different Cells' Normalized DFF
-target = dffmatrix;
+target = rawmatrix;
 corr = corrcoef(target);
 figure
 imagesc(corr) 
@@ -115,17 +155,17 @@ NumberLag = 50; % Number of Lag
 figure 
 for i = 1:ncell
    subplot(ncell,1,i)
-   plot(autocorr(dffmatrix(:,i),NumLags=NumberLag))
+   plot(autocorr(rawmatrix(:,i),NumLags=NumberLag))
 end
 figure
 for i = 1:ncell
     subplot(ncell,1,i)
-    [c,lag] = xcorr(dffmatrix(:,i),(dffmatrix(:,i+1)));
+    [c,lag] = xcorr(rawmatrix(:,i),(rawmatrix(:,i+1)));
     plot(lag,c)
 end
 %% Visualization of The Entire dffmatrix 
 figure
-imagesc(dffmatrix(1:100,:))
+imagesc(rawmatrix(1:100,:))
 colorbar
 %% Median and P-percentile mask and Moving Average on Raw Data(Reconstructing the getTraces Dff ) 
 K_neighbor = 5; % neibor size for mask
@@ -178,8 +218,8 @@ xlabel('Time Steps')
 ylabel('DFF and Baseline')
 legend('DFF','MA Baseline')
 %% PCA(loading plot of all cells)  and K Mean
-pcacoeff = pca(dffmatrix); % get the pca coefficient
-[~,score,latent] = pca(dffmatrix); % scores are % variance explained by pca
+pcacoeff = pca(rawmatrix); % get the pca coefficient
+[~,score,latent] = pca(rawmatrix); % scores are % variance explained by pca
 new_pcacoeff = pcacoeff(:,1:2);
 %scatter(new_pcacoeff(:,1),new_pcacoeff(:,2),45,"filled") % plot the pca1,2 coeff for all 21 cells
 rng(10)  % For reproducibility
@@ -231,7 +271,7 @@ ylabel(['PCA 2 ', num2str(varexplain2),' %'],Fontsize = 14)
 %% If this data doesn't look reasonable with K-Means, So we will try GMM(Gaussian Mixature Model)
 rng('default')% fix random state for reproducibility
 figure
-X = dffmatrix(:,[1 5]);
+X = rawmatrix(:,[1 5]);
 
 gm = fitgmdist(X,2);
 scatter(X(:,1),X(:,2),20,'.') % Scatter plot with points of size 10
@@ -266,7 +306,7 @@ x = 0:0.00001:2;
 y = sin(6*t); % a sin kernel with 
 
 %rawhighpass = highpass(dffmatrix(100:1000,1),499,1e3);
-rawnoisereduced = medfilt1(dffmatrix(:,cellnumber)); % apply a median filter to reduce noise
+rawnoisereduced = medfilt1(rawmatrix(:,cellnumber)); % apply a median filter to reduce noise
 rawhighpass = highpass(rawnoisereduced,499,1e3);
 
 transformed = conv(rawnoisereduced,y,'same'); % conv
@@ -290,3 +330,18 @@ end
 
 subplot(212),bar(transformed,5,'k')
 title(['Spike Count in Time(msc) Cell Number: ',num2str(cellnumber)],Fontsize = 14)
+
+%% Plot Stimulus On/Offset vs DFF 
+figure
+plot(dffmatrix(1:2000,1))
+stimOnthis = (stimOn/10000)*33;
+stimOnthis = [stimOnthis 2*ones(length(stimOnthis),1)];
+stimOffthis = (stimOff/10000)*33;
+stimOffthis = [stimOffthis 2*ones(length(stimOffthis),1)];
+hold on 
+bar(stimOnthis(:,1),stimOnthis(:,2),0.02)
+hold on
+bar(stimOffthis(:,1),stimOffthis(:,2),0.02)
+xlim([0 2000])
+legend('Dff','Stimulus On','Stimulus Off')
+title('Stimulus Onset vs DFF')
