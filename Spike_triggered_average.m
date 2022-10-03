@@ -1,8 +1,10 @@
 function [avg, nEvs] = Spike_triggered_average(stim, windowSize)
 
 % magic number for spike
-threshold = 5*median(abs(stim)/0.6745);
-
+t = 1:1:3e2;
+f = exp(-t./frame_decay);%30 frame decay
+stim = deconv(medfilt1(stim,3),f);
+threshold = 3*std(stim);
 resp = stim>threshold;
 % response
 subplot(2,1,1), plot(stim)
