@@ -4,7 +4,7 @@
 %sig is the standard deviation 
 %amp is the amplitude
 %vo is the vertical offset from baseline (positive or negative)
-
+rng(10) % set a random seed
 simulateData = struct; % Build a struct to store parameters informatio
 % ONLY RUN THIS SECTION FOR ONCE, OTHERWISE NEW FIELDS WILL OVERWRITE THE OLD !!!
 
