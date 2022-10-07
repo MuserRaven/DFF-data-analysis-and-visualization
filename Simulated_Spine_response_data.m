@@ -4,7 +4,7 @@
 %sig is the standard deviation 
 %amp is the amplitude
 %vo is the vertical offset from baseline (positive or negative)
-rng(10) % set a random seed
+rng(10)  % set a random seed
 simulateData = struct; % Build a struct to store parameters informatio
 % ONLY RUN THIS SECTION FOR ONCE, OTHERWISE NEW FIELDS WILL OVERWRITE THE OLD !!!
 
@@ -99,19 +99,19 @@ for i = 1:trialsize
 
   if reliable == 1 && success == 0
       simulateData.reliable_failure.(name) = struct('Mean_Normal',num2cell(mu),'Std_Constant',num2cell(sig),'Amplitude_Normal_Absolute',num2cell(amp) ...
-      ,'NoiseType',{{'noisetype = sinusoid',['NoiseAmp = ', num2str(noise)],['frequency = ', num2str(frequency)]}},'trial_trace',{num2cell(y)});
+      ,'NoiseType',{{'noisetype = sinusoid',['NoiseAmp = ', num2str(noise)],['frequency = ', num2str(frequency)]}},'trial_trace',y);
  
   elseif reliable == 1 && success == 1
       simulateData.reliable_success.(name) = struct('Mean_Normal',num2cell(mu),'Std_Constant',num2cell(sig),'Amplitude_Normal_Absolute',num2cell(amp) ...
-      ,'NoiseType',{{'noisetype = sinusoid',['NoiseAmp = ', num2str(noise)],['frequency = ', num2str(frequency)]}},'trial_trace',{num2cell(y)});
+      ,'NoiseType',{{'noisetype = sinusoid',['NoiseAmp = ', num2str(noise)],['frequency = ', num2str(frequency)]}},'trial_trace',y);
   
   elseif reliable == 0 && multiple_peaks == 0 
       simulateData.unreliable_singlepeak.(name) = struct('Mean_Normal',num2cell(mu),'Std_Random',num2cell(sig),'Amplitude_Chi2',num2cell(amp) ...
-      ,'NoiseType',{{'noisetype = sinusoid',['NoiseAmp = ', num2str(noise)],['frequency = ', num2str(frequency)]}},'trial_trace',{num2cell(y)});
+      ,'NoiseType',{{'noisetype = sinusoid',['NoiseAmp = ', num2str(noise)],['frequency = ', num2str(frequency)]}},'trial_trace',y);
   
   elseif reliable == 0 && multiple_peaks == 1
       simulateData.unreliable_multipeak.(name) = struct('Mean_Normal',num2cell(mu),'Std_Random',num2cell(sig),'Amplitude_Chi2',num2cell(amp) ...
-      ,'NoiseType',{{'noisetype = sinusoid',['NoiseAmp = ', num2str(noise)],['frequency = ', num2str(frequency)]}},'trial_trace',{num2cell(y)});
+      ,'NoiseType',{{'noisetype = sinusoid',['NoiseAmp = ', num2str(noise)],['frequency = ', num2str(frequency)]}},'trial_trace',y);
   end
 
 end
@@ -133,4 +133,3 @@ end
 % 6. Klustering properties of peaks values.
 % 7. Deviation within a cluster
 % 8. 
-
