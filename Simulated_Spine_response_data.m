@@ -11,9 +11,10 @@ simulateData = struct; % Build a struct to store parameters informatio
 %
 figure
 stimsize = 2000; % number of stimuli per condition '
-reliableX = [1 1 0 0 0 0]'; % 1 = reliable, 0 = not reliable
-successX = [1 0 0 0 2 2]'; % 1 = successful firing, 0 = unsucess
-trialsize= 8; % number of trials on each stimulus
+%%%%%%%%%%%%Parallel Pairs for Permutation:
+reliableX = [1 1 0 0 0 0]';       % 1 = reliable, 0 = not reliable
+successX = [1 0 0 0 2 2]';        % 1 = successful firing, 0 = unsucess
+trialsize= 8;                     % number of trials on each stimulus
 multiple_peaksX = [0 0 0 1 2 2]'; % generate multiple peaks on trace or not
 typeX = [0 0 0 0 1 2]' ;
 % THERE ARE 4 CONDITIONS IN TOTAL: RELIABLE SUCCESS, RELIABLE FAILURE, UNREALIABLE SINGLEPEAKS, UNRELIABLE MULTIPEAKS
@@ -90,7 +91,7 @@ name = ['stimulus',num2str(j)];
     vo = 0; 
     x = linspace(0,26,26);
     mu = normrnd(15,0.3,[trialsize,1]);
-    sig = 4*ones(trialsize,1);
+    sig = 5*ones(trialsize,1);
     noise = 10; noisetype = 'sinusoid'; frequency = 1;
     amp2 = 2.6*chi2rnd(2,[trialsize,1]); % amplitude for the second peak
     mu2 = normrnd(20,5,[trialsize,1]); % set the second peak mu to be no around 20
@@ -102,7 +103,7 @@ name = ['stimulus',num2str(j)];
     vo = 0; 
     x = linspace(0,26,26);
     mu = normrnd(15,0.3,[trialsize,1]);
-    sig = 4*ones(trialsize,1);
+    sig = 5*ones(trialsize,1);
     noise = 10; noisetype = 'sinusoid'; frequency = 1;
     amp2 = 2.6*chi2rnd(2,[trialsize,1]); % amplitude for the second peak
     mu2 = normrnd(20,5,[trialsize,1]); % set the second peak mu to be no around 20
@@ -114,40 +115,40 @@ name = ['stimulus',num2str(j)];
       disp 'reliable_failure'
       simulateData.reliable_failure.(name) = struct('Mean_Normal',num2cell(mu),'Std_Constant',num2cell(sig),'Amplitude_Normal_Absolute',num2cell(amp) ...
       ,'NoiseType',{{'noisetype = sinusoid',['NoiseAmp = ', num2str(noise)],['frequency = ', num2str(frequency)]}},'trial_trace',[], ...
-      'PeakLoc',[]);      
+      'PeakLoc',[],'MeanAfterNoise',[],'StdAfterNoise',[]);      
     
 
   elseif reliable == 1 && success == 1 && multiple_peaks == 0 && type == 0
       disp 'reliable_success'
       simulateData.reliable_success.(name) = struct('Mean_Normal',num2cell(mu),'Std_Constant',num2cell(sig),'Amplitude_Normal_Absolute',num2cell(amp) ...
       ,'NoiseType',{{'noisetype = sinusoid',['NoiseAmp = ', num2str(noise)],['frequency = ', num2str(frequency)]}},'trial_trace',[], ...
-      'PeakLoc',[]);
+      'PeakLoc',[],'MeanAfterNoise',[],'StdAfterNoise',[]);
   
   
   elseif reliable == 0 && success == 0 && multiple_peaks == 0 && type == 0
       disp 'unreliable_singlepeak'
       simulateData.unreliable_singlepeak.(name) = struct('Mean_Normal',num2cell(mu),'Std_Random',num2cell(sig),'Amplitude_Chi2',num2cell(amp) ...
       ,'NoiseType',{{'noisetype = sinusoid',['NoiseAmp = ', num2str(noise)],['frequency = ', num2str(frequency)]}},'trial_trace', [] ,...
-      'PeakLoc',[]);
+      'PeakLoc',[],'MeanAfterNoise',[],'StdAfterNoise',[]);
         
          
   elseif reliable == 0 && success == 0 && multiple_peaks == 1 && type == 0
       disp 'unreliable_multipeak'
       simulateData.unreliable_multipeak.(name) = struct('Mean_Normal',num2cell(mu),'Std_Random',num2cell(sig),'Amplitude_Chi2',num2cell(amp) ...
       ,'NoiseType',{{'noisetype = sinusoid',['NoiseAmp = ', num2str(noise)],['frequency = ', num2str(frequency)]}},'trial_trace',[], ...
-      'PeakLoc',[]);
+      'PeakLoc',[],'MeanAfterNoise',[],'StdAfterNoise',[]);
 
   elseif reliable == 0 && success == 2 && multiple_peaks == 2 && type == 1
       disp 'type1'
       simulateData.unreliable_type1.(name) = struct('Mean_Normal',num2cell(mu),'Std_Random',num2cell(sig),'Amplitude_Chi2',num2cell(amp) ...
       ,'NoiseType',{{'noisetype = sinusoid',['NoiseAmp = ', num2str(noise)],['frequency = ', num2str(frequency)]}},'trial_trace',[], ...
-      'PeakLoc',[]);
+      'PeakLoc',[],'MeanAfterNoise',[],'StdAfterNoise',[]);
 
   elseif reliable == 0 && success == 2 && multiple_peaks == 2 && type == 2
       disp 'type2'
       simulateData.unreliable_type2.(name) = struct('Mean_Normal',num2cell(mu),'Std_Random',num2cell(sig),'Amplitude_Chi2',num2cell(amp) ...
       ,'NoiseType',{{'noisetype = sinusoid',['NoiseAmp = ', num2str(noise)],['frequency = ', num2str(frequency)]}},'trial_trace',[], ...
-      'PeakLoc',[]);
+      'PeakLoc',[],'MeanAfterNoise',[],'StdAfterNoise',[]);
 
   end
 
@@ -160,32 +161,44 @@ for i = 1:trialsize
   %xlim([0,26])
   %hold on ;
  
-  loc = maxk(ystore(i,:),2,2);
-  loc = {find(ystore(i,:) == loc(1)), loc(1);find(ystore(i,:) == loc(2)), loc(2)};
+  loc = maxk(y,2,2);
+  loc = {find(y == loc(1)), loc(1);find(y == loc(2)), loc(2)};
 
   if reliable == 1 && success == 1 && multiple_peaks == 0 && type == 0
   simulateData.reliable_success.(name)(i).PeakLoc = loc;
   simulateData.reliable_success.(name)(i).trial_trace = y;
+  simulateData.reliable_success.(name)(i).MeanAfterNoise = mean(y);
+  simulateData.reliable_success.(name)(i).StdAfterNoise = std(y);
 
   elseif reliable == 1 && success == 0 && multiple_peaks == 0 && type == 0
   simulateData.reliable_failure.(name)(i).PeakLoc = loc;
   simulateData.reliable_failure.(name)(i).trial_trace = y; 
+  simulateData.reliable_failure.(name)(i).MeanAfterNoise = mean(y);
+  simulateData.reliable_failure.(name)(i).StdAfterNoise = std(y);
 
   elseif reliable == 0 && success == 0 && multiple_peaks == 0 && type == 0
   simulateData.unreliable_singlepeak.(name)(i).PeakLoc = loc;
   simulateData.unreliable_singlepeak.(name)(i).trial_trace = y;
+  simulateData.unreliable_singlepeak.(name)(i).MeanAfterNoise = mean(y);
+  simulateData.unreliable_singlepeak.(name)(i).StdAfterNoise = std(y);
 
   elseif reliable == 0 && success == 0 && multiple_peaks == 1 && type == 0
   simulateData.unreliable_multipeak.(name)(i).PeakLoc = loc;
   simulateData.unreliable_multipeak.(name)(i).trial_trace = y;
+  simulateData.unreliable_multipeak.(name)(i).MeanAfterNoise = mean(y);
+  simulateData.unreliable_multipeak.(name)(i).StdAfterNoise = std(y);
 
   elseif reliable == 0 && success == 2 && multiple_peaks == 2 && type == 1
   simulateData.unreliable_type1.(name)(i).PeakLoc = loc;
   simulateData.unreliable_type1.(name)(i).trial_trace = y;
+  simulateData.unreliable_type1.(name)(i).MeanAfterNoise = mean(y);
+  simulateData.unreliable_type1.(name)(i).StdAfterNoise = std(y);
 
   elseif reliable == 0 && success == 2 && multiple_peaks == 2 && type == 2
   simulateData.unreliable_type2.(name)(i).PeakLoc = loc;
   simulateData.unreliable_type2.(name)(i).trial_trace = y;
+  simulateData.unreliable_type2.(name)(i).MeanAfterNoise = mean(y);
+  simulateData.unreliable_type2.(name)(i).StdAfterNoise = std(y);
 
   end
 
