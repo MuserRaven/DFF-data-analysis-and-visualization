@@ -10,7 +10,7 @@ simulateData = struct; % Build a struct to store parameters informatio
 %% Perfectly reliable Case( both mu and sigma are fixed) And not reliable random cases
 %
 figure
-stimsize = 2000; % number of stimuli per condition '
+stimsize = 2; % number of stimuli per condition '
 %%%%%%%%%%%%Parallel Pairs for Permutation:
 reliableX = [1 1 0 0 0 0]';       % 1 = reliable, 0 = not reliable
 successX = [1 0 0 0 2 2]';        % 1 = successful firing, 0 = unsucess
@@ -19,7 +19,7 @@ multiple_peaksX = [0 0 0 1 2 2]'; % generate multiple peaks on trace or not
 typeX = [0 0 0 0 1 2]' ;
 % THERE ARE 4 CONDITIONS IN TOTAL: RELIABLE SUCCESS, RELIABLE FAILURE, UNREALIABLE SINGLEPEAKS, UNRELIABLE MULTIPEAKS
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-for h = 1:6
+for h = 2
 reliable = reliableX(h);
 success = successX(h);
 multiple_peaks = multiple_peaksX(h);
@@ -33,7 +33,7 @@ name = ['stimulus',num2str(j)];
    if reliable == 1 && success == 0 && multiple_peaks == 0 && type == 0
 
     index = 0; 
-    amp = abs(normrnd(1,2,[trialsize,1]));
+    amp = abs(normrnd(1,5,[trialsize,1]));
     vo = 1; 
     x = linspace(0,26,26);
     mu = normrnd(15,0.1,[trialsize,1]);
@@ -155,11 +155,11 @@ name = ['stimulus',num2str(j)];
 for i = 1:trialsize
   y = (gaus(x,mu(i),sig(i),amp(i),vo) + index*gaus(x,mu2(i),sig2(i),amp2(i),vo) + noise*sin(frequency*rand(1,26)));
   %Plot gaussian
-  %subplot(2,1,j);
-  %plot(x, y, 'k-', 'LineWidth',1); axis square; 
-  %ylim([0,32])
-  %xlim([0,26])
-  %hold on ;
+  subplot(2,1,j);
+  scatter(x, y,'k'); axis square; 
+  ylim([0,32])
+  xlim([0,26])
+  hold on ;
  
   loc = maxk(y,2,2);
   loc = {find(y == loc(1)), loc(1);find(y == loc(2)), loc(2)};
@@ -213,13 +213,6 @@ end
 %first for loop
 
 %%
-figure
-store = simulateData.reliable_success.stimulus2.trial_trace;
-imagesc(corr(store'));
-colorbar
-% SOME THOUGHTS:
-figure
-histogram(store(3,:))
 
 % Label simulated datasets as 'reliable' or 'unreliable'
 % reliable can have two states 1. reliable failure(non-preferred stimulus)
