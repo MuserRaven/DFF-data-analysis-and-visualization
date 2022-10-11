@@ -2,6 +2,7 @@
 %mu is the mean
 %sig is the standard deviation 
 %amp is the amplitude
+
 %vo is the vertical offset from baseline (positive or negative)
 rng(10)  % set a random seed
 simulateData = struct; % Build a struct to store parameters informatio
@@ -10,16 +11,18 @@ simulateData = struct; % Build a struct to store parameters informatio
 %% Perfectly reliable Case( both mu and sigma are fixed) And not reliable random cases
 %
 figure
-stimsize = 2; % number of stimuli per condition '
+stimsize = 1000; % number of stimuli per condition '
 %%%%%%%%%%%%Parallel Pairs for Permutation:
 reliableX = [1 1 0 0 0 0]';       % 1 = reliable, 0 = not reliable
 successX = [1 0 0 0 2 2]';        % 1 = successful firing, 0 = unsucess
 trialsize= 8;                     % number of trials on each stimulus
 multiple_peaksX = [0 0 0 1 2 2]'; % generate multiple peaks on trace or not
 typeX = [0 0 0 0 1 2]' ;
+noise_type = {'sin uniform','sin normal','sin poisson','uniform','normal','poisson'};
+noisy = 'sin poisson';
 % THERE ARE 4 CONDITIONS IN TOTAL: RELIABLE SUCCESS, RELIABLE FAILURE, UNREALIABLE SINGLEPEAKS, UNRELIABLE MULTIPEAKS
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-for h = 2
+for h = 1:5
 reliable = reliableX(h);
 success = successX(h);
 multiple_peaks = multiple_peaksX(h);
@@ -33,12 +36,12 @@ name = ['stimulus',num2str(j)];
    if reliable == 1 && success == 0 && multiple_peaks == 0 && type == 0
 
     index = 0; 
-    amp = abs(normrnd(1,5,[trialsize,1]));
+    amp = abs(normrnd(1,5,[trialsize,1])); % smaller amplitude
     vo = 1; 
     x = linspace(0,26,26);
-    mu = normrnd(15,0.1,[trialsize,1]);
-    sig = 4*ones(trialsize,1); 
-    noise = 10; noisetype = 'sinusoid'; frequency = 1;
+    mu = 5*normrnd(15,1,[trialsize,1]); % larger deviation of mean
+    sig = 4*ones(trialsize,1); % same standard deviation 
+    noise = 10; noisetype = 'sinusoid'; frequency = 1;%same noise
     amp2 = 2.6*chi2rnd(2,[trialsize,1]); % amplitude for the second peak
     mu2 = normrnd(20,5,[trialsize,1]); % set the second peak mu to be no around 20
     sig2 = 3*rand(trialsize,1); % standard deviation of the second peak
@@ -49,8 +52,8 @@ name = ['stimulus',num2str(j)];
     vo = 0; 
     x = linspace(0,26,26);
     mu = normrnd(15,0.3,[trialsize,1]);
-    sig = 4*ones(trialsize,1);
-    noise = 10; noisetype = 'sinusoid'; frequency = 1;
+    sig = 4*ones(trialsize,1); % same standard deviation 
+    noise = 10; noisetype = 'sinusoid'; frequency = 1; %b same noise
     amp2 = 2.6*chi2rnd(2,[trialsize,1]); % amplitude for the second peak
     mu2 = normrnd(20,5,[trialsize,1]); % set the second peak mu to be no around 20
     sig2 = 3*rand(trialsize,1); % standard deviation of the second peak
@@ -153,13 +156,30 @@ name = ['stimulus',num2str(j)];
   end
 
 for i = 1:trialsize
-  y = (gaus(x,mu(i),sig(i),amp(i),vo) + index*gaus(x,mu2(i),sig2(i),amp2(i),vo) + noise*sin(frequency*rand(1,26)));
+
+    if strcmp(noisy,'sin normal')
+       y = (gaus(x,mu(i),sig(i),amp(i),vo)) + index*gaus(x,mu2(i),sig2(i),amp2(i),vo) + noise*frequency*(sin(randn(1,26)));
+    elseif strcmp(noisy,'sin uniform')
+       y = (gaus(x,mu(i),sig(i),amp(i),vo)) + index*gaus(x,mu2(i),sig2(i),amp2(i),vo) + noise*frequency*(sin(rand(1,26)));
+    elseif strcmp(noisy, 'sin poisson')
+       noi = poissrnd(0.5,26);
+       y = (gaus(x,mu(i),sig(i),amp(i),vo)) + index*gaus(x,mu2(i),sig2(i),amp2(i),vo) + noise*frequency*(sin(noi(1,:)));
+    elseif strcmp(noisy,'normal')
+       y = (gaus(x,mu(i),sig(i),amp(i),vo)) + index*gaus(x,mu2(i),sig2(i),amp2(i),vo) + randn(1,26);
+    elseif strcmp(noisy,'uniform')
+       y = (gaus(x,mu(i),sig(i),amp(i),vo)) + index*gaus(x,mu2(i),sig2(i),amp2(i),vo) + rand(1,26);
+    elseif strcmp(noisy,'poisson') % add poisson noise
+       noi = poissrnd(0.5,26);
+       y = (gaus(x,mu(i),sig(i),amp(i),vo)) + index*gaus(x,mu2(i),sig2(i),amp2(i),vo) + noi(1,:);
+    end
+ 
+  %noise*sin(frequency*poissrnd(0.5,26)))
   %Plot gaussian
-  subplot(2,1,j);
-  scatter(x, y,'k'); axis square; 
-  ylim([0,32])
-  xlim([0,26])
-  hold on ;
+ % subplot(2,1,j);
+ % plot(x, y,'k'); axis square; 
+  %ylim([0,32])
+  %xlim([0,26])
+  %hold on ;
  
   loc = maxk(y,2,2);
   loc = {find(y == loc(1)), loc(1);find(y == loc(2)), loc(2)};
@@ -226,4 +246,3 @@ end
 % 6. Klustering properties of peaks values.
 % 7. Deviation within a cluster(disperstion of peaks' location)
 % 8. 
-
