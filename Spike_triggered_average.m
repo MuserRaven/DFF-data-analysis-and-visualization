@@ -8,12 +8,12 @@ resp = stim>threshold;
 % response
 %figure
 %subplot(2,1,1), plot(stim)
-line([1, length(stim)], [threshold, threshold], 'LineStyle', '--', ...
-    'color', 'k')
-ylabel('DFF'), title('Stimulus');
+%line([1, length(stim)], [threshold, threshold], 'LineStyle', '--', ...
+   % 'color', 'k')
+%ylabel('DFF'), title('Stimulus');
 %subplot(2,1,2), plot(resp(1:length(stim)), 'r')
-ylabel('Spikes'), title('Response')
-xlabel('Time')
+%ylabel('Spikes'), title('Response')
+%xlabel('Time')
 
 
 resp(1:windowSize)=0;
@@ -30,7 +30,7 @@ avg = zeros(1,windowSize);
     avg = avg + stim(wIdx);
   end
 
-avg=avg./sum(resp);
+avg = avg./sum(resp);
 
 %figure
 %plot(avg)
@@ -42,3 +42,4 @@ avg=avg./sum(resp);
 %figure
 %histogram(stim,length(stim))
 end
+
