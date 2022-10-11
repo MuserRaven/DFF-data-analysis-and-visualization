@@ -1,4 +1,10 @@
 % DataType = Grating
+residual = true; % specify whether you want residual or not 
+files = dir('D:\stimulus_data\flashedbars\*.mat');
+for f = 10:20  % chooose the number of files you want to extract
+   load(files(f).name) 
+
+
 
 index = Spike_triggered_average(dataStruct.dendrite.dff,100,30);
 % The index of Spine STA when a dendrite Spikes.
@@ -8,14 +14,18 @@ windowsize = 30;
 avg = zeros(1,2*windowsize);
 storage = nan(length(dataStruct.spine),2*windowsize+1);
 %figure
+
 for i = 1:length(dataStruct.spine)
-   dffspine = dataStruct.spine(i).dff_raw;
-   for j = index
-   if j - windowsize >=0
+    if residual == true
+        dffspine = dataStruct.spine(i).dff_residual;
+    else
+        dffspine = dataStruct.spine(i).dff_raw;
+    end
+   
+   for j = index(index>=windowsize & length(dffspine)-index(end)>=windowsize)
+
+   
    avg = avg + dffspine(j-windowsize:j+windowsize);
-   else
-       disp 'Window Size Too Large'
-   end
  
    end
    avg = avg./windowsize; storage(i,:) = avg(:,i);
@@ -24,22 +34,24 @@ for i = 1:length(dataStruct.spine)
     
 end
 %figure
-for i = 1:length(dataStruct.spine)
+%for i = 1:length(dataStruct.spine)
 
- subplot(length(dataStruct.spine),1,i), imagesc(storage(i,:))
-  xline(windowsize,LineWidth=1.5,Color='r')
+ %ubplot(length(dataStruct.spine),1,i), imagesc(storage(i,:))
+  %xline(windowsize,LineWidth=1.5,Color='r')
  
-end
+%end
   
-  xlabel('t')
-  ylabel('dff')
+ % xlabel('t')
+%  ylabel('dff')
   
 figure
 imagesc(storage(:,:))
 colorbar
-xline(30,LineWidth=1.5)
+xline(30,LineWidth=3)
 xlabel('Time')
 ylabel('Spine #')
-title('Cell 47 dendrite2 Spine STA for Dendritic Spike Threshold = 5*std(stim)')
+title([files(f).name, ' Spine STA for Dendritic Spike'])
+
+end
 
 
