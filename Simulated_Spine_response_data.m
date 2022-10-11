@@ -1,25 +1,32 @@
+
 %x is an array of x-values.
 %mu is the mean
 %sig is the standard deviation 
 %amp is the amplitude
+noise_type = {'sin_uniform','sin_normal','sin_poisson','uniform','normal','poisson'};
 
 %vo is the vertical offset from baseline (positive or negative)
-rng(10)  % set a random seed
-simulateData = struct; % Build a struct to store parameters informatio
+  % set a random seed
+
+simulateData = struct;
+
+% Build a struct to store parameters informatio
 % ONLY RUN THIS SECTION FOR ONCE, OTHERWISE NEW FIELDS WILL OVERWRITE THE OLD !!!
 
-%% Perfectly reliable Case( both mu and sigma are fixed) And not reliable random cases
+% Perfectly reliable Case( both mu and sigma are fixed) And not reliable random cases
 %
-figure
-stimsize = 1000; % number of stimuli per condition '
+
+
+stimsize = 10; % number of stimuli per condition '
 %%%%%%%%%%%%Parallel Pairs for Permutation:
 reliableX = [1 1 0 0 0 0]';       % 1 = reliable, 0 = not reliable
 successX = [1 0 0 0 2 2]';        % 1 = successful firing, 0 = unsucess
 trialsize= 8;                     % number of trials on each stimulus
 multiple_peaksX = [0 0 0 1 2 2]'; % generate multiple peaks on trace or not
 typeX = [0 0 0 0 1 2]' ;
-noise_type = {'sin uniform','sin normal','sin poisson','uniform','normal','poisson'};
-noisy = 'sin poisson';
+prob = 0.1;
+noisy = noise_type(1);
+
 % THERE ARE 4 CONDITIONS IN TOTAL: RELIABLE SUCCESS, RELIABLE FAILURE, UNREALIABLE SINGLEPEAKS, UNRELIABLE MULTIPEAKS
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 for h = 1:5
@@ -27,19 +34,19 @@ reliable = reliableX(h);
 success = successX(h);
 multiple_peaks = multiple_peaksX(h);
 type = typeX(h);
-
+figure
 
 gaus = @(x,mu,sig,amp,vo)amp*exp(-(((x-mu).^2)/(2*sig.^2)))+vo;
- 
+
 for j = 1:stimsize
 name = ['stimulus',num2str(j)];
    if reliable == 1 && success == 0 && multiple_peaks == 0 && type == 0
-
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     index = 0; 
     amp = abs(normrnd(1,5,[trialsize,1])); % smaller amplitude
     vo = 1; 
     x = linspace(0,26,26);
-    mu = 5*normrnd(15,1,[trialsize,1]); % larger deviation of mean
+    mu = 5*normrnd(12,1,[trialsize,1]); % larger deviation of mean, % set mu around 12
     sig = 4*ones(trialsize,1); % same standard deviation 
     noise = 10; noisetype = 'sinusoid'; frequency = 1;%same noise
     amp2 = 2.6*chi2rnd(2,[trialsize,1]); % amplitude for the second peak
@@ -47,11 +54,12 @@ name = ['stimulus',num2str(j)];
     sig2 = 3*rand(trialsize,1); % standard deviation of the second peak
     
    elseif reliable == 1 && success == 1 && multiple_peaks == 0 && type == 0
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     index = 0; 
     amp = abs(normrnd(20,5,[trialsize,1]));
     vo = 0; 
     x = linspace(0,26,26);
-    mu = normrnd(15,0.3,[trialsize,1]);
+    mu = normrnd(12,0.3,[trialsize,1]); % set mu around 12
     sig = 4*ones(trialsize,1); % same standard deviation 
     noise = 10; noisetype = 'sinusoid'; frequency = 1; %b same noise
     amp2 = 2.6*chi2rnd(2,[trialsize,1]); % amplitude for the second peak
@@ -60,59 +68,79 @@ name = ['stimulus',num2str(j)];
     
 
 
-  elseif reliable == 0 && success == 0 && multiple_peaks == 0 && type == 0
+   elseif reliable == 0 && success == 0 && multiple_peaks == 0 && type == 0
+     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
+     ampunrelia = nan(1,trialsize);
+    for g = 1:trialsize
+      if rand < prob  
+      %amp = normrnd(26,5,8);
+          ampunrelia(:,g) = abs(normrnd(25,1,1)) ;% 2 degree of freedom chi2 distribution 
+      else
+          ampunrelia(:,g) = abs(normrnd(2,1,1));
+      end        
+    end
+    amp = ampunrelia';
 
-    index = 0; 
-    %amp = normrnd(26,5,8);
-    amp = 4*chi2rnd(2,[trialsize,1]); % 2 degree of freedom chi2 distribution 
     vo = 0; 
+    index = 0; 
     x = linspace(0,26,26);
-    mu = normrnd(15,5,[trialsize,1]); % set the mu to be rand around 15
+    mu = normrnd(12,5,[trialsize,1]); % set the mu to be rand around 12
     sig = 4*rand(trialsize,1);
     noise = 50; noisetype = 'sinusoid'; frequency = 0.1;
-    amp2 = 2.6*chi2rnd(2,[trialsize,1]); % amplitude for the second peak
+    amp2 = 5*chi2rnd(2,[trialsize,1]); % amplitude for the second peak
     mu2 = normrnd(20,5,[trialsize,1]); % set the second peak mu to be no around 20
     sig2 = 3*rand(trialsize,1); % standard deviation of the second peak
     
 
-  elseif reliable == 0 && success == 0 && multiple_peaks == 1 && type == 0
+   elseif reliable == 0 && success == 0 && multiple_peaks == 1 && type == 0
+      %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+      ampunrelia2 = nan(1,trialsize);
+    for g = 1:trialsize
+      if rand < prob
+      %amp = normrnd(26,5,8);
+          ampunrelia2(:,g) = abs(normrnd(25,1,1)) ;% 2 degree of freedom chi2 distribution 
+      else
+          ampunrelia2(:,g) = abs(normrnd(2,1,1));
+      end     
+    end
+      amp = ampunrelia2';
+
+      ampunrelia22 = nan(1,trialsize);
+    for u = 1:trialsize
+      if rand < prob
+      %amp = normrnd(26,5,8);
+          ampunrelia22(:,u) = abs(normrnd(25,1,1)) ;% 2 degree of freedom chi2 distribution 
+      else
+          ampunrelia22(:,u) = abs(normrnd(2,1,1));
+      end     
+    end
+      amp2 = ampunrelia22';
     index = 1 ; % set the index = 1 to initialize the term. 
     %amp = normrnd(26,5,8);
-    amp = 4*chi2rnd(2,[trialsize,1]); % 2 degree of freedom chi2 distribution 
+    amp = 5*chi2rnd(2,[trialsize,1]); % 2 degree of freedom chi2 distribution 
     vo = 0; 
     x = linspace(0,26,26);
-    mu = normrnd(15,5,[trialsize,1]); % std of mu = 5
+    mu = normrnd(12,5,[trialsize,1]); % std of mu = 5
     sig = 3*rand(trialsize,1);
     noise = 50; noisetype = 'sinusoid'; frequency = 0.1;
-    amp2 = 2.6*chi2rnd(2,[trialsize,1]); % amplitude for the second peak
+    %amp2 = 5*chi2rnd(2,[trialsize,1]); % amplitude for the second peak Change to 6 to en
     mu2 = normrnd(20,5,[trialsize,1]); % set the second peak mu to be no around 20
     sig2 = 3*rand(trialsize,1); % standard deviation of the second peak 
     
   elseif reliable == 0 && success == 2 && multiple_peaks == 2 && type == 1
     index = 0; 
-    amp = 25*rand([trialsize,1]);
+    amp = 5*chi2rnd(2,[trialsize,1]);
     vo = 0; 
     x = linspace(0,26,26);
-    mu = normrnd(15,0.3,[trialsize,1]);
+    mu = normrnd(12,0.3,[trialsize,1]);
     sig = 5*ones(trialsize,1);
     noise = 10; noisetype = 'sinusoid'; frequency = 1;
-    amp2 = 2.6*chi2rnd(2,[trialsize,1]); % amplitude for the second peak
+    amp2 = 6*chi2rnd(2,[trialsize,1]); % amplitude for the second peak
     mu2 = normrnd(20,5,[trialsize,1]); % set the second peak mu to be no around 20
     sig2 = 3*rand(trialsize,1); % standard deviation of the second peak
-    
-   elseif reliable == 0 && success == 2 && multiple_peaks == 2 && type == 2
-    index = 0; 
-    amp = 25*rand([trialsize,1]);
-    vo = 0; 
-    x = linspace(0,26,26);
-    mu = normrnd(15,0.3,[trialsize,1]);
-    sig = 5*ones(trialsize,1);
-    noise = 10; noisetype = 'sinusoid'; frequency = 1;
-    amp2 = 2.6*chi2rnd(2,[trialsize,1]); % amplitude for the second peak
-    mu2 = normrnd(20,5,[trialsize,1]); % set the second peak mu to be no around 20
-    sig2 = 3*rand(trialsize,1); % standard deviation of the second peak
-  
+
   end
+
 
   if reliable == 1 && success == 0 && multiple_peaks == 0 && type == 0
       disp 'reliable_failure'
@@ -157,26 +185,26 @@ name = ['stimulus',num2str(j)];
 
 for i = 1:trialsize
 
-    if strcmp(noisy,'sin normal')
+    if strcmp(noisy,'sin_normal')
        y = (gaus(x,mu(i),sig(i),amp(i),vo)) + index*gaus(x,mu2(i),sig2(i),amp2(i),vo) + noise*frequency*(sin(randn(1,26)));
-    elseif strcmp(noisy,'sin uniform')
+    elseif strcmp(noisy,'sin_uniform')
        y = (gaus(x,mu(i),sig(i),amp(i),vo)) + index*gaus(x,mu2(i),sig2(i),amp2(i),vo) + noise*frequency*(sin(rand(1,26)));
-    elseif strcmp(noisy, 'sin poisson')
+    elseif strcmp(noisy, 'sin_poisson')
        noi = poissrnd(0.5,26);
        y = (gaus(x,mu(i),sig(i),amp(i),vo)) + index*gaus(x,mu2(i),sig2(i),amp2(i),vo) + noise*frequency*(sin(noi(1,:)));
     elseif strcmp(noisy,'normal')
-       y = (gaus(x,mu(i),sig(i),amp(i),vo)) + index*gaus(x,mu2(i),sig2(i),amp2(i),vo) + randn(1,26);
+       y = (gaus(x,mu(i),sig(i),amp(i),vo)) + index*gaus(x,mu2(i),sig2(i),amp2(i),vo) + 2*randn(1,26);
     elseif strcmp(noisy,'uniform')
-       y = (gaus(x,mu(i),sig(i),amp(i),vo)) + index*gaus(x,mu2(i),sig2(i),amp2(i),vo) + rand(1,26);
+       y = (gaus(x,mu(i),sig(i),amp(i),vo)) + index*gaus(x,mu2(i),sig2(i),amp2(i),vo) + 2*rand(1,26);
     elseif strcmp(noisy,'poisson') % add poisson noise
        noi = poissrnd(0.5,26);
-       y = (gaus(x,mu(i),sig(i),amp(i),vo)) + index*gaus(x,mu2(i),sig2(i),amp2(i),vo) + noi(1,:);
+       y = (gaus(x,mu(i),sig(i),amp(i),vo)) + index*gaus(x,mu2(i),sig2(i),amp2(i),vo) + 2*noi(1,:);
     end
  
-  %noise*sin(frequency*poissrnd(0.5,26)))
+
   %Plot gaussian
- % subplot(2,1,j);
- % plot(x, y,'k'); axis square; 
+  %subplot(2,5,j);
+  %plot(x, y,'k'); axis square; 
   %ylim([0,32])
   %xlim([0,26])
   %hold on ;
@@ -228,9 +256,6 @@ end
 
 
 
-% second for loop
-
-%first for loop
 
 %%
 
