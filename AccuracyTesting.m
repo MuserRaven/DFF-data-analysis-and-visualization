@@ -25,13 +25,13 @@ count = max(store,[],2)>17;
 count = sum(count)/8;
 aver = (count + ChatterjeeCorr(store))/2;
 if aver >= score && count >= P
-    disp 'reliable_success'
+    %disp 'reliable_success'
     prediction(j) = 1;
 elseif count == 0 
-    disp 'reliable_failure'
+    %disp 'reliable_failure'
     prediction(j) = 2;
 else
-    disp 'unreliable'
+    %disp 'unreliable'
     prediction(j) = 3;
 
 end
@@ -57,9 +57,8 @@ end
 end
 mom(u) = mean(accuracy(u,:));
 end
-momx = mean(mom);
+momx = 1-mean(mom,'all')
 accuracy
-
 
 
 
