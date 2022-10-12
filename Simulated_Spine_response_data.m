@@ -1,4 +1,3 @@
-
 %x is an array of x-values.
 %mu is the mean
 %sig is the standard deviation 
@@ -17,14 +16,14 @@ simulateData = struct;
 %
 
 
-stimsize = 10; % number of stimuli per condition '
+stimsize = 1000; % number of stimuli per condition '
 %%%%%%%%%%%%Parallel Pairs for Permutation:
 reliableX = [1 1 0 0 0 0]';       % 1 = reliable, 0 = not reliable
 successX = [1 0 0 0 2 2]';        % 1 = successful firing, 0 = unsucess
 trialsize= 8;                     % number of trials on each stimulus
 multiple_peaksX = [0 0 0 1 2 2]'; % generate multiple peaks on trace or not
 typeX = [0 0 0 0 1 2]' ;
-prob = 0.1;
+prob = 0.3;
 noisy = noise_type(1);
 
 % THERE ARE 4 CONDITIONS IN TOTAL: RELIABLE SUCCESS, RELIABLE FAILURE, UNREALIABLE SINGLEPEAKS, UNRELIABLE MULTIPEAKS
@@ -34,7 +33,7 @@ reliable = reliableX(h);
 success = successX(h);
 multiple_peaks = multiple_peaksX(h);
 type = typeX(h);
-figure
+
 
 gaus = @(x,mu,sig,amp,vo)amp*exp(-(((x-mu).^2)/(2*sig.^2)))+vo;
 
@@ -271,3 +270,6 @@ end
 % 6. Klustering properties of peaks values.
 % 7. Deviation within a cluster(disperstion of peaks' location)
 % 8. 
+
+
+
