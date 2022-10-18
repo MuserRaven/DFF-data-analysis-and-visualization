@@ -1,83 +1,101 @@
 load('checkermap.mat')
-windowsize = 10;
-net_storage = nan(61,2*windowsize+1);
-figure
-for f = 1:60 %length(checkermap(1).dff(:,1))  % chooose the number of files you want to extract
-   index = Spike_triggered_average(checkermap(2).dff(f,19:end),windowsize,3);
-   % The index of Spine STA when a dendrite Spikes.
-   avg = zeros(1,2*windowsize+1);
-   storage = nan(length(checkermap(2).dff)-18,2*windowsize+1);
-   %figure
-   
-   dffspine = checkermap(2).dff(f,19:17074)';
-   
-   for j = index(index>=windowsize & length(dffspine)-index(end)>=windowsize)
-   avg = avg + dffspine(j-windowsize:j+windowsize);
-   end
 
-   avg = avg./windowsize;
-   %plot(avg)
-   %hold on 
-    
 
-%figure
-%for i = 1:length(dataStruct.spine)
+%%
+exper = 2;
+h = checkermap(exper).dff(1,:);
+index = find(h>=5*std(h(19:end)));
+checkermap(exper).StimOnTimes;
 
- %ubplot(length(dataStruct.spine),1,i), imagesc(storage(i,:))
-  %xline(windowsize,LineWidth=1.5,Color='r')
- 
-%end
-  
- % xlabel('t')
-%  ylabel('dff'
-  net_storage(f,:) = avg(:,1)';
+stimtime = [];
+for u = 1:length(index)
+    f = find(checkermap(exper).StimOnTimes < index(u));
+    stimtime = cat(1,stimtime,f(end-1:end));
+% get the stimonTimes index
 end
 
-imagesc(net_storage(:,1:end-1))
-colorbar
-xline(10,LineWidth=2)
-xlabel('Time')
-ylabel('Cell')
-%% Get the Receptive field of active 
- for c = 5:10%length(checkermap(2).dff(:,1))
- index = Spike_triggered_average(checkermap(2).dff(c,19:end),windowsize,3); index = index';  % threshold = 5std of error
- checkermap(2).StimOnTimes; % now we only look at cell 1
- sta_loc = [];
- for u = 1:length(index)
- if find(checkermap(2).StimOnTimes < index(u) & checkermap(2).StimOnTimes > index(u)-8) > 0 % find the non empty location
- sta_loc = cat(1,sta_loc,find(checkermap(2).StimOnTimes < index(u) & checkermap(2).StimOnTimes > index(u)-8));
- end
- end
-raw_rf_time = checkermap(2).StimOnTimes(sta_loc);
-raw_rf = checkermap(2).StimOnLocations(sta_loc,:);
-
+raw_rf_time = checkermap(exper).StimOnTimes(stimtime); % get the raw response time preceding a spike
+raw_rf = checkermap(exper).StimOnLocations(stimtime,:);% get the raw stimulus locations preceding a spike 3*11
 
 w = [];
-for i = 1:length(sta_loc) % Number of spike
+for o = 1:length(raw_rf(:,1)) % Number of spike
+ simfield = [41:50;31:40;21:30;11:20;1:10];
 
-simfield = [41:50;31:40;21:30;11:20;1:10]; % simulate a visual field
+ for  j = 1:4 % each location of stimulus
+  simfield = reshape(simfield,[1,50]);
+ % repeat for all 3 stimuli before a spike
 
-for  j = 1:4 % each location of stimulus
- simfield = reshape(simfield,[1,50]);
- for r = 1:50
-  if simfield(r) == raw_rf(i,j)
-     simfield(r) = 10000000;
-  else
-     simfield(r) = simfield(r);
+   for r = 1:50
+     if simfield(1,r) == raw_rf(o,j)
+        simfield(1,r) = 100;
+     else 
+        simfield(1,r) = simfield(1,r);
+     end
+   end
+
   end
- end
- 
-end
+
  simfield = reshape(simfield,[5,10]);
+ simfield(simfield < 100) = 0 ;
+
+
  w = cat(1,w,simfield); % where all stimulus is store
 end
+
 x = zeros(5,10);
-for u = 1:length(sta_loc)
-parse = length(w(:,1))/length(sta_loc);
-x = x + w((5*(u-1)+1:5*u),:) ;
+
+hx = repmat(h(index),2,1); reshape(repmat(h(index),2,1),[1,length(hx(:,1))*length(hx(1,:))])
+for u = 1:length(raw_rf(:,1))
+
+x = x + hx(u)*w((5*(u-1)+1:5*u),:) ;
 end
+
 
 figure
 imagesc(x);axis off;
+
 colorbar
- end
+
+%%
+exper = 2;
+h = checkermap(exper).dff(1,:);
+index = find(h>=5*std(h(19:end)));
+checkermap(exper).StimOnTimes;
+
+stimtime = [];
+for u = 1:length(index)
+    f = find(checkermap(exper).StimOnTimes < index(u));
+    stimtime = cat(1,stimtime,f(end-1:end));
+% get the stimonTimes index
+end
+
+raw_rf_time = checkermap(exper).StimOnTimes(stimtime); % get the raw response time preceding a spike
+raw_rf = checkermap(exper).StimOnLocations(stimtime,:);% get the raw stimulus locations preceding a spike 3*11
+
+w = [];
+for o = 1:length(raw_rf(:,1)) % Number of spike
+ simfield = [41:50;31:40;21:30;11:20;1:10];
+
+ for  j = 1:4 % each location of stimulus
+  simfield = reshape(simfield,[1,50]);
+ % repeat for all 3 stimuli before a spike
+
+   for r = 1:50
+     if simfield(1,r) == raw_rf(o,j)
+        simfield(1,r) = 100;
+      
+        plot(response); hold on
+     else 
+        simfield(1,r) = simfield(1,r);
+     end
+   end
+
+  end
+
+ simfield = reshape(simfield,[5,10]);
+ simfield(simfield < 100) = 0 ;
+
+
+ w = cat(1,w,simfield); % where all stimulus is store
+end
+%%
