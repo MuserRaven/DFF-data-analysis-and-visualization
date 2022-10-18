@@ -1,45 +1,40 @@
-function [evIdx] = Spike_triggered_average(stim, windowSize,frame_decay)
+load('checkermap.mat')
+windowsize = 10;
+net_storage = nan(61,2*windowsize+1);
+figure
+for f = 1:60 %length(checkermap(1).dff(:,1))  % chooose the number of files you want to extract
+   index = Spike_triggered_average(checkermap(2).dff(f,19:end),windowsize,3);
+   % The index of Spine STA when a dendrite Spikes.
+   avg = zeros(1,2*windowsize+1);
+   storage = nan(length(checkermap(2).dff)-18,2*windowsize+1);
+   %figure
+   
+   dffspine = checkermap(2).dff(f,19:17074)';
+   
+   for j = index(index>=windowsize & length(dffspine)-index(end)>=windowsize)
+   avg = avg + dffspine(j-windowsize:j+windowsize);
+   end
 
-t = 1:1:3e2;
-f = exp(-t./frame_decay);%
-stim = deconv(medfilt1(stim,3),f);
-threshold = 5*std(stim);
-resp = stim>threshold;
-% response
-%figure
-%subplot(2,1,1), plot(stim)
-%line([1, length(stim)], [threshold, threshold], 'LineStyle', '--', ...
-   % 'color', 'k')
-%ylabel('DFF'), title('Stimulus');
-%subplot(2,1,2), plot(resp(1:length(stim)), 'r')
-%ylabel('Spikes'), title('Response')
-%xlabel('Time')
-
-
-resp(1:windowSize)=0;
-
-nEvs = sum(resp); % the number of responses
-evIdx = find(resp); % the index of responses
-
-%Save the average in the variable avg, so preallocate it before the for loop.
-avg = zeros(1,windowSize);
-  for w = 1:nEvs
-    % Find the indexes of the time window preceding the event
-    wIdx = evIdx(w)-windowSize : evIdx(w)-1;
-    % Add the dffdendrite from this window to the average
-    avg = avg + stim(wIdx);
-  end
-
-avg = avg./sum(resp);
+   avg = avg./windowsize;
+   %plot(avg)
+   %hold on 
+    
 
 %figure
-%plot(avg)
-%hold on 
-%plot(movmean(avg,10),'-.')
-%title(['Average of ', num2str(nEvs),  'windows'])
-%xlabel('Time')
-%ylabel('DFF')
-%figure
-%histogram(stim,length(stim))
+%for i = 1:length(dataStruct.spine)
+
+ %ubplot(length(dataStruct.spine),1,i), imagesc(storage(i,:))
+  %xline(windowsize,LineWidth=1.5,Color='r')
+ 
+%end
+  
+ % xlabel('t')
+%  ylabel('dff'
+  net_storage(f,:) = avg(:,1)';
 end
 
+imagesc(net_storage(:,1:end-1))
+colorbar
+xline(10,LineWidth=2)
+xlabel('Time')
+ylabel('Cell')
