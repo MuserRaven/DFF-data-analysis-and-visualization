@@ -1,8 +1,10 @@
-filelist = dir('C:\Ben Lab\Project1\flashedbars\');
+load('somaBarPrefs.mat')
+filelist = dir('D:\Matlab External File\flashedbars\');
+
 
 % Sum over all dendrites 
 cell = {'cell1_dendrite','cell2_dendrite','cell3_dendrite','cell4_dendrite','cell5_dendrite','cell6_dendrite','cell7_dendrite','cell8_dendrite'};
-for c = 3
+for c = 1:3
 figure
 cellname = cell(c);
 h = [];
@@ -81,20 +83,17 @@ load(filelist(location(1)).name)
 
 end
  
-%% SAME AS THE ABOVE BUT 
-filelist = dir('C:\Ben Lab\Project1\flashedbars\');
+%% SAME AS THE ABOVE BUT After Removing Invalid Spine
+filelist = dir('D:\Matlab External File\flashedbars\');
 
 % Sum over all dendrites 
-
-cell = {'cell1_dendrite','cell2_dendrite','cell3_dendrite','cell4_dendrite','cell5_dendrite','cell6_dendrite','cell7_dendrite','cell8_dendrite'
-  'cell9_dendrite','cell10_dendrite','cell11_dendrite','cell12_dendrite','cell13_dendrite','cell14_dendrite','cell15_dendrite','cell16_dendrite','cell17_dendrite'
-  'cell18_dendrite','cell19_dendrite','cell20_dendrite','cell21_dendrite','cell22_dendrite','cell23_dendrite','cell24_dendrite','cell25_dendrite','cell26_dendrite'
-  'cell27_dendrite','cell28_dendrite','cell29_dendrite','cell30_dendrite','cell31_dendrite','cell32_dendrite','cell33_dendrite'};
-
-for c = 8
-figure
+cell = {'cell1_dendrite','cell2_dendrite','cell3_dendrite','cell4_dendrite','cell5_dendrite','cell6_dendrite','cell7_dendrite','cell8_dendrite','cell9_dendrite','cell10_dendrite','cell11_dendrite','cell12_dendrite','cell13_dendrite','cell14_dendrite','cell15_dendrite','cell16_dendrite','cell17_dendrite','cell18_dendrite','cell19_dendrite','cell20_dendrite','cell21_dendrite','cell22_dendrite','cell23_dendrite','cell24_dendrite','cell25_dendrite','cell26_dendrite','cell27_dendrite','cell28_dendrite','cell29_dendrite','cell30_dendrite','cell31_dendrite','cell32_dendrite','cell33_dendrite'};
+Maxresponse_loc = [];
+for c = 1
+%figure
 cellname = cell(c);
 h = [];
+
 for j = 1:527
     if strfind(filelist(j).name,cellname) == 1
        h = cat(1,h,strfind(filelist(j).name,cellname));
@@ -109,16 +108,20 @@ p_spine = [];
 corr_spine = [];
 peak_loc = [];
 peak_spine = [];
+net_distance = [];
 
 for u = location'
   load(filelist(u).name)
+  distance = []; % get the distance of a spine given a dendrite. 
 
 
 for j = 1:length(dataStruct.spine) % number of spine
   threshold = 5*std(dataStruct.spine(j).dff_raw<0);
     peak = nan(length(dataStruct.spine(1).responses(:,1,1)),2);
+    distance = cat(1,distance,dataStruct.spine(j).distance);
 
     for i = 1:length(dataStruct.spine(1).responses(:,1,1)) % Number of stimulus
+
         disp(length(dataStruct.spine(1).responses(:,1,1)))
         response = squeeze(dataStruct.spine(j).responses(i,:,:));
         count = max(response,[],2) > threshold;
@@ -128,12 +131,15 @@ for j = 1:length(dataStruct.spine) % number of spine
         [M,I] = max(response,[],2);
         peak(i,1) = mean(M); % value of max
         peak(i,2) = mean(I); % index of max
+       
 
     end
     peak_spine = cat(1,peak_spine,peak(:,1));
     peak_loc = cat(1,peak_loc,peak(:,2));
     
 end
+net_distance = cat(1,net_distance,distance);
+
 end
 
 peak_spine = reshape(peak_spine,[length(dataStruct.spine(1).responses(:,1,1)),length(peak_spine)/length(dataStruct.spine(1).responses(:,1,1))]); peak_spine = peak_spine';
@@ -142,6 +148,7 @@ corr_spine = reshape(corr_spine,[length(dataStruct.spine(1).responses(:,1,1)),le
 p_spine = reshape(p_spine,[length(dataStruct.spine(1).responses(:,1,1)),length(p_spine)/length(dataStruct.spine(1).responses(:,1,1))]); p_spine = p_spine';
 index = nan(length(p_spine(:,1)),1);
 
+% Clean spines that don't respond at all. 
 for t = 1:length(index)
   if sum(p_spine(t,:)) == 0
     index(t) = 0;
@@ -149,36 +156,58 @@ for t = 1:length(index)
     index(t) = 1;
   end
 end
+
 peak_loc = peak_loc(index > 0,:);
 peak_spine = peak_spine(index > 0,:);
 corr_spine = corr_spine(index > 0,:);
+net_distance = net_distance(index>0);
 meancorr = mean(corr_spine,1);
 p_spine = p_spine(index > 0,:);
 meanspine = mean(p_spine,1);
+
 % plot the spine ID vs P(r) Corr(r) average
 %plot(1:7,meanspine,'b--o')
 %hold on 
 %plot(1:7,meancorr,'r--o')
 %xlabel('Spine ID')
 %legend('Mean P(r)','Mean Corr(r)')
-        
-%Get the histogram 
-for i = 1:length(dataStruct.spine(1).responses(:,1,1))
-subplot(3,length(dataStruct.spine(1).responses(:,1,1)),i)
+
+
+%Get the histogram
+max_response = []; 
+for i = 1:length(dataStruct.spine(1).responses(:,1,1)) % Number of stimuli
+subplot(4,length(dataStruct.spine(1).responses(:,1,1)),i)
 loc = peak_loc(:,i);peak = peak_spine(:,i);
 scatter(loc(peak_spine(:,i)>=threshold),peak(peak_spine(:,i)>=threshold),'r','filled');
-hold on 
+max_response = cat(1,max_response,length(peak(peak_spine(:,i)>=threshold)));
+hold on
 scatter(loc(peak_spine(:,i)<threshold),peak(peak_spine(:,i)<threshold),'b','filled')
 xlim([0 20]);ylim([0 6]);yline(threshold);
+
 %xlabel(['%Act = ',num2str(length(loc(peak_spine(:,i)>=threshold))/length(loc))])
-subplot(3,length(dataStruct.spine(1).responses(:,1,1)),i+length(dataStruct.spine(1).responses(:,1,1)))
+subplot(4,length(dataStruct.spine(1).responses(:,1,1)),i+length(dataStruct.spine(1).responses(:,1,1)))
 histogram(corr_spine(:,i),BinWidth=0.05)
 xlim([0,1])
 ylim([0 300])
-subplot(3,length(dataStruct.spine(1).responses(:,1,1)),i+2*length(dataStruct.spine(1).responses(:,1,1)))
+
+subplot(4,length(dataStruct.spine(1).responses(:,1,1)),i+2*length(dataStruct.spine(1).responses(:,1,1)))
 histogram(p_spine(:,i),BinWidth=0.05)
 xlim([0,1])
 ylim([0 600])
+
+subplot(4,length(dataStruct.spine(1).responses(:,1,1)),i+3*length(dataStruct.spine(1).responses(:,1,1)))
+x = corr_spine(:,i);
+scatter(net_distance(p_spine(:,i)>=0.625),x(p_spine(:,i)>=0.625),'k','filled');hold on 
+
 end
+
 sgtitle([cellname,' x stimulus'])
+[M,I] = max(max_response,[],1);% Get the index of maximum spine responses
+
+if I > 0
+Maxresponse_loc = cat(1,Maxresponse_loc,I);
+elseif isnan(I)
+Maxresponse_loc = cat(1,Maxresponse_loc,nan);
+end
+
 end
