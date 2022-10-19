@@ -85,7 +85,12 @@ end
 filelist = dir('C:\Ben Lab\Project1\flashedbars\');
 
 % Sum over all dendrites 
-cell = {'cell1_dendrite','cell2_dendrite','cell3_dendrite','cell4_dendrite','cell5_dendrite','cell6_dendrite','cell7_dendrite','cell8_dendrite'};
+
+cell = {'cell1_dendrite','cell2_dendrite','cell3_dendrite','cell4_dendrite','cell5_dendrite','cell6_dendrite','cell7_dendrite','cell8_dendrite'
+  'cell9_dendrite','cell10_dendrite','cell11_dendrite','cell12_dendrite','cell13_dendrite','cell14_dendrite','cell15_dendrite','cell16_dendrite','cell17_dendrite'
+  'cell18_dendrite','cell19_dendrite','cell20_dendrite','cell21_dendrite','cell22_dendrite','cell23_dendrite','cell24_dendrite','cell25_dendrite','cell26_dendrite'
+  'cell27_dendrite','cell28_dendrite','cell29_dendrite','cell30_dendrite','cell31_dendrite','cell32_dendrite','cell33_dendrite'};
+
 for c = 8
 figure
 cellname = cell(c);
