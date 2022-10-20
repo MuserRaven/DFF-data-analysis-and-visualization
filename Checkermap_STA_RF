@@ -1,101 +1,43 @@
 load('checkermap.mat')
-
-
 %%
+
+cc = 1;
 exper = 2;
-h = checkermap(exper).dff(1,:);
+h = checkermap(exper).dff(cc,:);
 index = find(h>=5*std(h(19:end)));
 checkermap(exper).StimOnTimes;
 
 stimtime = [];
 for u = 1:length(index)
     f = find(checkermap(exper).StimOnTimes < index(u));
-    stimtime = cat(1,stimtime,f(end-1:end));
+    stimtime = cat(2,stimtime,f(end-1:end));
 % get the stimonTimes index
 end
 
 raw_rf_time = checkermap(exper).StimOnTimes(stimtime); % get the raw response time preceding a spike
-raw_rf = checkermap(exper).StimOnLocations(stimtime,:);% get the raw stimulus locations preceding a spike 3*11
-
-w = [];
-for o = 1:length(raw_rf(:,1)) % Number of spike
- simfield = [41:50;31:40;21:30;11:20;1:10];
-
- for  j = 1:4 % each location of stimulus
-  simfield = reshape(simfield,[1,50]);
- % repeat for all 3 stimuli before a spike
-
-   for r = 1:50
-     if simfield(1,r) == raw_rf(o,j)
-        simfield(1,r) = 100;
-     else 
-        simfield(1,r) = simfield(1,r);
-     end
-   end
-
-  end
-
- simfield = reshape(simfield,[5,10]);
- simfield(simfield < 100) = 0 ;
+raw_rf = checkermap(exper).StimOnLocations(stimtime,:);% get the raw stimulus locations preceding a spike 2*11
 
 
- w = cat(1,w,simfield); % where all stimulus is store
+StimOnTimes = raw_rf_time;
+StimOnLocations = raw_rf;
+dff_all = checkermap(exper).dff;
+
+    figure
+r = zeros(50,8);
+
+for n = 1:length(StimOnTimes)
+    dff = dff_all(cc,StimOnTimes(n):StimOnTimes(n) + 7); % cell_ID dff_StimOn to StimOn+15
+    dff = dff - mean(dff(1:2)); % dff - the mean of first 2 elements. What does this do ?
+    r(StimOnLocations(n,:),:) = r(StimOnLocations(n,:),:) + ones(4,1)*dff; % input stimulus location
 end
 
-x = zeros(5,10);
-
-hx = repmat(h(index),2,1); reshape(repmat(h(index),2,1),[1,length(hx(:,1))*length(hx(1,:))])
-for u = 1:length(raw_rf(:,1))
-
-x = x + hx(u)*w((5*(u-1)+1:5*u),:) ;
+%figure(1)
+mm = max(max(r))+10;
+for t = 1:size(r,2) % time length = 16
+   subplot(1,size(r,2),t)
+   imagesc(reshape(r(:,t),10,5))
+   caxis([-mm mm])
+   axis off
 end
+colormap(redbluecmap)
 
-
-figure
-imagesc(x);axis off;
-
-colorbar
-
-%%
-exper = 2;
-h = checkermap(exper).dff(1,:);
-index = find(h>=5*std(h(19:end)));
-checkermap(exper).StimOnTimes;
-
-stimtime = [];
-for u = 1:length(index)
-    f = find(checkermap(exper).StimOnTimes < index(u));
-    stimtime = cat(1,stimtime,f(end-1:end));
-% get the stimonTimes index
-end
-
-raw_rf_time = checkermap(exper).StimOnTimes(stimtime); % get the raw response time preceding a spike
-raw_rf = checkermap(exper).StimOnLocations(stimtime,:);% get the raw stimulus locations preceding a spike 3*11
-
-w = [];
-for o = 1:length(raw_rf(:,1)) % Number of spike
- simfield = [41:50;31:40;21:30;11:20;1:10];
-
- for  j = 1:4 % each location of stimulus
-  simfield = reshape(simfield,[1,50]);
- % repeat for all 3 stimuli before a spike
-
-   for r = 1:50
-     if simfield(1,r) == raw_rf(o,j)
-        simfield(1,r) = 100;
-      
-        plot(response); hold on
-     else 
-        simfield(1,r) = simfield(1,r);
-     end
-   end
-
-  end
-
- simfield = reshape(simfield,[5,10]);
- simfield(simfield < 100) = 0 ;
-
-
- w = cat(1,w,simfield); % where all stimulus is store
-end
-%%
