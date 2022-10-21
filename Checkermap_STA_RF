@@ -10,7 +10,7 @@ checkermap(exper).StimOnTimes;
 stimtime = [];
 for u = 1:length(index)
     f = find(checkermap(exper).StimOnTimes < index(u));
-    stimtime = cat(2,stimtime,f(end-1:end));
+    stimtime = cat(2,stimtime,f(end));
 % get the stimonTimes index
 end
 
@@ -40,4 +40,5 @@ for t = 1:size(r,2) % time length = 16
    axis off
 end
 colormap(redbluecmap)
+
 
