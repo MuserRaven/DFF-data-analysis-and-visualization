@@ -1,5 +1,5 @@
 load('TSeries-08282022-1146-002.mat')
-
+nr_cell = ce(1:15); ko_cell = ce(16:end);
 %% Check Cell's Validity
 for j = 1:length(nr_cell)
     threshold = 5*std(nr_cell(j).dff(19:end));
@@ -20,24 +20,49 @@ for j = 1:length(ko_cell)
         disp 'Valid Cell'
     end
 end
-% cell 31(16 here) NMDA KO is invalid 
+computePeakResp()
+% cell 31(16 here) NMDA KO is invalid
+%%
+figure
+x = nr_cell(1).dff(19:end);
+threshold = 5*std(x(nr_cell(1).dff(19:end)<0));
+t = 1:1:3e2;
+f = exp(-t./33);%
+plot(deconv(x,f));hold on
+yline(threshold)
+computePeakResp(nr_cell(1).dff(19:end)')
+%
+figure
+y = deconv(x,f);
+plot(y(y>=threshold))
+
+
+
+
 %%
 figure
 subplot(3,1,1)
-nr_cell = ce(1:15); ko_cell = ce(16:end);
 nr_totaldff = [];
 ko_totaldff = [];
 for i = 1:length(nr_cell)
-    nr_totaldff = cat(1,nr_totaldff,nr_cell(i).dff(19:end));
-    ko_totaldff = cat(1,ko_totaldff,ko_cell(i).dff(19:end));
+    thres_nr = 5*std(nr_cell(i).dff(19:end));
+    thres_ko = 5*std(ko_cell(i).dff(19:end));
+    nr_amp = nr_cell(i).dff(19:end);
+    ko_amp = ko_cell(i).dff(19:end);
+    nr_totaldff = cat(1,nr_totaldff,nr_amp(nr_amp >= thres_nr));
+    ko_totaldff = cat(1,ko_totaldff,ko_amp(ko_amp >= thres_ko));
 end
-histogram(nr_totaldff,100,BinWidth=0.02,EdgeAlpha = 0.5,FaceAlpha = 0.5)
+histogram(nr_totaldff,100,BinWidth=0.01,EdgeAlpha = 0.5,FaceAlpha = 0.5)
 hold on 
-histogram(ko_totaldff,100,BinWidth=0.02,EdgeAlpha = 0.5,FaceAlpha = 0.5)
-xlim([-0.5 1])
+histogram(ko_totaldff,100,BinWidth=0.01,EdgeAlpha = 0.5,FaceAlpha = 0.5)
+xlim([0 2])
 xlabel('Amplitude')
-title('Dff Amplitude')
-legend('Normal Cell','KO Cell')
+title('Dff Spike Amplitude')
+legend(['Normal Cell n = ',num2str(length(nr_totaldff))],['KO Cell n = ',num2str(length(ko_totaldff))])
+%% Two-sample Kolmogorov-Smirnov test
+
+[h,p] = kstest2(nr_totaldff,ko_totaldff); 
+
 %% Frequency Analysis
 subplot(3,1,2)
 Fs = 30; % sampling frequency    
@@ -91,7 +116,8 @@ for i = 1:length(ce)
     storage = cat(2,storage,ce(i).dff(19:end));
 end
 storage = storage';
-imagesc(corr(storage'))
+%imagesc(corr(storage'))
+histogram(corr(storage'))
 yline(15.5,LineWidth=1.5)
 xline(15.5,LineWidth=1.5)
 colorbar
@@ -105,3 +131,46 @@ for i = 1:length(ce)
       scatter(ce(i).xPos,ce(i).yPos,'filled','r');hold on % treatment
     end
 end
+%% Extract Correlagram clusters and Extract X pos and Y pos and calculate their distance to each other
+matrix_corr = corr(storage');
+%histogram(matrix_corr)
+thres = prctile(matrix_corr,90,'all');
+matrix_corr(matrix_corr >= thres) = 1; % get clusters of 1std above the mean
+matrix_corr(matrix_corr < thres) = 0;
+figure
+imagesc(matrix_corr)
+title('Correlation Cluster above 90% percentile')
+
+xpos = []; ypos = [];
+xpos = cat(1,xpos,ce(1:end).xPos); ypos = cat(1,ypos,ce(1:end).yPos);
+
+for xIndex = 1 : length(xpos)
+  for yIndex = 1 : length(ypos)
+    matrix_dist(xIndex, yIndex) = sqrt((xpos(xIndex)-xpos(yIndex))^2 + (ypos(xIndex)-ypos(yIndex))^2);
+  end
+end
+thres = prctile(matrix_dist,10,'all');
+matrix_dist(matrix_dist < thres ) = 1;
+matrix_dist(matrix_dist > thres) = 0;
+figure
+imagesc(matrix_dist)
+title('Distance Cluster below 10% percentile')
+%%
+
+overlap = matrix_dist+matrix_corr;
+overlap(overlap<2) = 0;
+figure
+
+imagesc(overlap)
+title('Overlap')
+
+
+%%
+figure
+plot(ce(1).dff)
+threshold = 5*std(ce(1).dff(19:end));
+yline(threshold,LineWidth=1.5)
+%%
+figure
+histogram(ce(1).raw,100)
+
