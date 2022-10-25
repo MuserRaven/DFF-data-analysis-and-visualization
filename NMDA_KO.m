@@ -20,22 +20,32 @@ for j = 1:length(ko_cell)
         disp 'Valid Cell'
     end
 end
-computePeakResp()
+
 % cell 31(16 here) NMDA KO is invalid
 %%
 figure
 x = nr_cell(1).dff(19:end);
-threshold = 5*std(x(nr_cell(1).dff(19:end)<0));
-t = 1:1:3e2;
-f = exp(-t./33);%
-plot(deconv(x,f));hold on
-yline(threshold)
-computePeakResp(nr_cell(1).dff(19:end)')
-%
-figure
-y = deconv(x,f);
-plot(y(y>=threshold))
 
+
+% create the gaussian filter:
+sigma = 2; % pick sigma value for the gaussian
+gaussFilter = gausswin(6*sigma + 1)';
+gaussFilter = gaussFilter / sum(gaussFilter); % normalize
+% use the convolution:
+filteredData = conv(x, gaussFilter, 'same');
+%plot(filteredData)
+
+t = 1:1:2e3;
+f = exp(-t./30);%
+y = deconv(filteredData,f,'same'); y(y<=0)=0;
+plot(y);hold on
+
+%%
+figure
+x = deconv(dFFDnoise(ko_totaldff(1:6500),0.2),f);
+plot(x)
+hold on 
+plot(find(x>=5*std(x(x<0))),x(x>=5*std(x(x<0))),'o')
 
 
 
@@ -49,20 +59,23 @@ for i = 1:length(nr_cell)
     thres_ko = 5*std(ko_cell(i).dff(19:end));
     nr_amp = nr_cell(i).dff(19:end);
     ko_amp = ko_cell(i).dff(19:end);
-    nr_totaldff = cat(1,nr_totaldff,nr_amp(nr_amp >= thres_nr));
-    ko_totaldff = cat(1,ko_totaldff,ko_amp(ko_amp >= thres_ko));
+    
+    x = deconv(dFFDnoise(nr_amp,0.2),f); x(x>=5*std(x(x<0)));
+    y = deconv(dFFDnoise(ko_amp,0.2),f); y(y>=5*std(y(y<0)));
+    nr_totaldff = cat(1,nr_totaldff,x(x>=5*std(x(x<0))));
+    ko_totaldff = cat(1,ko_totaldff,y(y>=5*std(y(y<0))));
 end
-histogram(nr_totaldff,100,BinWidth=0.01,EdgeAlpha = 0.5,FaceAlpha = 0.5)
+histogram(nr_totaldff,200,BinWidth=0.01,EdgeAlpha = 0.5,FaceAlpha = 0.5)
 hold on 
-histogram(ko_totaldff,100,BinWidth=0.01,EdgeAlpha = 0.5,FaceAlpha = 0.5)
-xlim([0 2])
+histogram(ko_totaldff,200,BinWidth=0.01,EdgeAlpha = 0.5,FaceAlpha = 0.5)
+xlim([0 0.5])
 xlabel('Amplitude')
 title('Dff Spike Amplitude')
 legend(['Normal Cell n = ',num2str(length(nr_totaldff))],['KO Cell n = ',num2str(length(ko_totaldff))])
 %% Two-sample Kolmogorov-Smirnov test
 
 [h,p] = kstest2(nr_totaldff,ko_totaldff); 
-
+threshold = 5*std(x(x<0));
 %% Frequency Analysis
 subplot(3,1,2)
 Fs = 30; % sampling frequency    
@@ -72,7 +85,7 @@ for i = 1:length(nr_cell)
     nr_totaldff = cat(1,nr_totaldff,nr_cell(i).dff(19:end)); 
 end
 L = length(nr_totaldff);% Length of normal cell signal
-ff = fft(nr_totaldff,L);
+ff = fft(dFFDnoise(nr_totaldff,0.2),L);
 fffn = ff(1:L/2);
 fffn = fffn/max(fffn);
 xfft = Fs*(0:L/2-1)/L;
@@ -85,7 +98,7 @@ for i = 1:length(ko_cell)
     end
 end
 L = length(ko_totaldff);% Length of normal cell signal
-ff = fft(ko_totaldff,L);
+ff = fft(dFFDnoise(ko_totaldff,0.2),L);
 fffk = ff(1:L/2);
 fffk = fffk/max(fffk);
 xfft = Fs*(0:L/2-1)/L;
@@ -105,8 +118,8 @@ histogram(abs(fffn))
 hold on 
 histogram(abs(fffk))
 legend('Normal Cell','KO Cell')
-ylim([0 20000])
-xlim([0,0.01])
+ylim([0 50000])
+xlim([0,0.005])
 xlabel('Frequency(Hz)')
 title('Dff Frequency')
 %% Correlagram
@@ -115,13 +128,32 @@ storage = [];
 for i = 1:length(ce)
     storage = cat(2,storage,ce(i).dff(19:end));
 end
-storage = storage';
-%imagesc(corr(storage'))
-histogram(corr(storage'))
+storage = storage'; storage = dFFDnoise(storage,0.2);
+imagesc(corr(storage'));colormap(redbluecmap)
+%histogram(corr(storage'))
 yline(15.5,LineWidth=1.5)
 xline(15.5,LineWidth=1.5)
 colorbar
 title('Normal Cell(1-15) vs KO Cells(16-43)')
+%%
+figure
+for i = 50
+x = corr(storage');h = randi([16,28],15,1);
+histogram(x(h,h),40,BinWidth = 0.01,FaceAlpha= 0.7, EdgeAlpha= 0,FaceColor= 'r', Normalization = 'probability')
+hold on 
+histogram(x(1:15,1:15),40,BinWidth = 0.01,FaceAlpha= 0.7, EdgeAlpha= 0, FaceColor= 'b',Normalization = 'probability')
+hold on
+histogram(x(1:15,h),40,BinWidth = 0.01,FaceAlpha= 0.7, EdgeAlpha= 0,FaceColor= 'g',Normalization = 'probability')
+end
+%ylim([0,40]);xlim([0.4,1])
+%histfit(reshape(x(1:15,1:15),225,1),30,'normal',BinWidth = 0.01)
+legend('KO+','KO-','KO+ * KO-')
+title('Histogram For Correlation')
+xlabel('Correlation');ylabel('Probability')
+
+mean(x(1:15,h),'all')
+std2(x(1:15,h))
+
 %% Plot the position 
 figure
 for i = 1:length(ce)
@@ -138,7 +170,7 @@ thres = prctile(matrix_corr,90,'all');
 matrix_corr(matrix_corr >= thres) = 1; % get clusters of 1std above the mean
 matrix_corr(matrix_corr < thres) = 0;
 figure
-imagesc(matrix_corr)
+imagesc(matrix_corr);
 title('Correlation Cluster above 90% percentile')
 
 xpos = []; ypos = [];
@@ -153,7 +185,7 @@ thres = prctile(matrix_dist,10,'all');
 matrix_dist(matrix_dist < thres ) = 1;
 matrix_dist(matrix_dist > thres) = 0;
 figure
-imagesc(matrix_dist)
+imagesc(matrix_dist);
 title('Distance Cluster below 10% percentile')
 %%
 
@@ -166,11 +198,9 @@ title('Overlap')
 
 
 %%
-figure
-plot(ce(1).dff)
-threshold = 5*std(ce(1).dff(19:end));
-yline(threshold,LineWidth=1.5)
-%%
-figure
-histogram(ce(1).raw,100)
 
+x = dFFDnoise(ce(1).dff(20:end),0.20);
+t = 1:1:3e3;
+f = exp(-t./33);%
+y = deconv(x,f); 
+plot(y);hold on
